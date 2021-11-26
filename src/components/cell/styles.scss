@@ -1,0 +1,45 @@
+.cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #000;
+  background-color: #fff3e4;
+  min-width: fit-content;
+  min-height: fit-content;
+
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+@keyframes glow-yellow {
+  from {
+    background-color: #ffcc1d;
+  }
+
+  to {
+    background-color: #fff3e4;
+  }
+}
+
+@keyframes glow-green {
+  from {
+    background-color: #2fdd92;
+  }
+
+  to {
+    background-color: #fff3e4;
+  }
+}
+
+.glow-yellow {
+  -webkit-animation: glow-yellow 1s ease-out;
+  -moz-animation: glow-yellow 1s ease-out;
+  animation: glow-yellow 1s ease-out;
+}
+
+.glow-green {
+  -webkit-animation: glow-green 1s ease-out;
+  -moz-animation: glow-green 1s ease-out;
+  animation: glow-green 1s ease-out;
+}
