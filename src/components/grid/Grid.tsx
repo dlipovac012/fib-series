@@ -18,10 +18,10 @@ function Grid({ gridSize }: { gridSize: number; }) {
     return Array(gridSize).fill(0).map(()=>Array(gridSize).fill(0))
   });
   const [origin, setOrigin] = useState<IPoint>({ x: 0, y: 0 });
-  const [pointsToBeDeleted, setPointsToBeDeleted] = useState([] as IPoint[]);
+  const [pointsToBeDeleted, setPointsToBeDeleted] = useState<IPoint[]>([]);
 
   useEffect(() => {
-    lookForSequence(grid, sequenceLength, origin);
+    setPointsToBeDeleted(lookForSequence(grid, sequenceLength, origin))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grid]);
 
@@ -31,17 +31,22 @@ function Grid({ gridSize }: { gridSize: number; }) {
     </div>
   );
 
-  function renderGrid() {
+  function renderGrid() {    
 		return grid.map((_, i) => {
       return (<Fragment key={`row-${i}`}>
         {grid[i].map((_, j) => {
+          if (pointsToBeDeleted.some(point => {
+            return point.x === i && point.y === j;
+          })) {
+            grid[i][j] = 0;
+          }
           return <Cell 
             key={`x=${i}-y=${j}`} 
             value={grid[i][j]}
-            handleClick={incrementRowAndColumn.bind(null, { x: i, y: j})} 
+            handleClick={incrementRowAndColumn.bind(null, { x: i, y: j})}
             />
         })}
-      </Fragment>)
+      </Fragment>);
     });
 	}
 
@@ -118,7 +123,7 @@ function Grid({ gridSize }: { gridSize: number; }) {
    * if there is a new matching sequence, one of its points has to be on one of the axis;
    * check them both, then check perpendicular points to that axis to see if there is a match
   */
-  function lookForSequence(grid: number[][], sequenceLength: number, origin: IPoint): void {
+  function lookForSequence(grid: number[][], sequenceLength: number, origin: IPoint): IPoint[] {
     let ranges: IPoint[] = [];
 
     // generate arrays of points that are on each axis
@@ -142,8 +147,8 @@ function Grid({ gridSize }: { gridSize: number; }) {
       const rangeForSpecificPoint = generateRange(point, Axis.HORIZONTAL, sequenceLength);
       ranges = ranges.concat(findSequenceInRange(rangeForSpecificPoint));
     });
-
-    setPointsToBeDeleted(ranges);
+    
+    return ranges;
 
     function findSequenceInRange(range: IPoint[]): IPoint[] {
       let bingoPoints: IPoint[] = [];
