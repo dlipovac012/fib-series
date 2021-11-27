@@ -12,18 +12,23 @@ interface IPoint {
   y: number;
 }
 
-function Grid({ gridSize }: { gridSize: number; }) {
-  const sequenceLength = 5;
+function Grid({ gridSize, sequenceLength }: { gridSize: number; sequenceLength: number; }) {
   const [grid, setGrid] = useState(() => {
     return Array(gridSize).fill(0).map(()=>Array(gridSize).fill(0))
   });
-  const [origin, setOrigin] = useState<IPoint>({ x: 0, y: 0 });
   const [pointsToBeDeleted, setPointsToBeDeleted] = useState<IPoint[]>([]);
 
+  // Delete all points that satisfy the task and rerender
   useEffect(() => {
-    setPointsToBeDeleted(lookForSequence(grid, sequenceLength, origin))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grid]);
+    setGrid(grid => {
+      const newGrid = [ ...grid ];
+      pointsToBeDeleted.forEach(point => {
+        newGrid[point.x][point.y] = 0;
+      });
+
+      return newGrid;
+    });
+  }, [pointsToBeDeleted]);
 
   return (
     <div style={{display: 'grid', gridTemplateColumns: `repeat(${gridSize}, 1fr)`, gridTemplateRows: `repeat(${gridSize}, 1fr)`}}>
@@ -35,22 +40,17 @@ function Grid({ gridSize }: { gridSize: number; }) {
 		return grid.map((_, i) => {
       return (<Fragment key={`row-${i}`}>
         {grid[i].map((_, j) => {
-          if (pointsToBeDeleted.some(point => {
-            return point.x === i && point.y === j;
-          })) {
-            grid[i][j] = 0;
-          }
           return <Cell 
             key={`x=${i}-y=${j}`} 
             value={grid[i][j]}
-            handleClick={incrementRowAndColumn.bind(null, { x: i, y: j})}
+            handleClick={handleClick.bind(null, { x: i, y: j})}
             />
         })}
       </Fragment>);
     });
 	}
 
-  function incrementRowAndColumn(point: IPoint) {
+  function handleClick(point: IPoint): void {
     const { x, y } = point;
     let newGrid = [ ...grid ];
     // increment row
@@ -61,17 +61,18 @@ function Grid({ gridSize }: { gridSize: number; }) {
       return row;
     });
     newGrid[x][y] = newGrid[x][y] - 1;
+    
 
-    setOrigin(point);
-    return setGrid(newGrid);
+    setPointsToBeDeleted(lookForSequence(newGrid, sequenceLength, point));
+    setGrid(newGrid);
   }
 
-  function generateRange(point: IPoint, axis: Axis, rangeLenght: number): IPoint[] {
+  function generateRange(grid: number[][], point: IPoint, axis: Axis, rangeLenght: number): IPoint[] {
     const range: IPoint[] = [{ x: point.x, y: point.y }];
     switch (axis) {
       case Axis.HORIZONTAL:
         for (let j = 1; j < rangeLenght; j++) {
-          const pointsValue = isValidField({ row: point.x, col: point.y - j, gridSize }) && grid[point.x][point.y - j];
+          const pointsValue = isValidField({ row: point.x, col: point.y - j, gridSize }) ? grid[point.x][point.y - j] : undefined;
           if (isValidField({ value: pointsValue, row: point.x, col: point.y - j, gridSize })) {
             range.unshift({ x: point.x, y: point.y - j });
           }
@@ -81,7 +82,7 @@ function Grid({ gridSize }: { gridSize: number; }) {
         }
 
         for (let j = 1; j < rangeLenght; j++) {
-          const pointsValue = isValidField({ row: point.x, col: point.y + j, gridSize }) && grid[point.x][point.y + j];
+          const pointsValue = isValidField({ row: point.x, col: point.y + j, gridSize }) ? grid[point.x][point.y + j] : undefined;
           if (isValidField({ value: pointsValue, row: point.x, col: point.y + j, gridSize })) {
             range.push({ x: point.x, y: point.y + j });
           }
@@ -123,12 +124,12 @@ function Grid({ gridSize }: { gridSize: number; }) {
    * if there is a new matching sequence, one of its points has to be on one of the axis;
    * check them both, then check perpendicular points to that axis to see if there is a match
   */
-  function lookForSequence(grid: number[][], sequenceLength: number, origin: IPoint): IPoint[] {
+  function lookForSequence(grid:  number[][], sequenceLength: number, origin: IPoint): IPoint[] {
     let ranges: IPoint[] = [];
 
     // generate arrays of points that are on each axis
-    const horizontalRange = generateRange(origin, Axis.HORIZONTAL, gridSize);
-    const verticalRange = generateRange(origin, Axis.VERTICAL, gridSize);
+    const horizontalRange = generateRange(grid, origin, Axis.HORIZONTAL, gridSize);
+    const verticalRange = generateRange(grid, origin, Axis.VERTICAL, gridSize);
 
     // search for sequence on each axis
     const sequencesOnXAxis = findSequenceInRange(horizontalRange);
@@ -139,17 +140,20 @@ function Grid({ gridSize }: { gridSize: number; }) {
 
     // for every point on each axis, generate range of perpendicular agains that specific point, and check if there are matching sequences 
     horizontalRange.forEach(point => {
-      const rangeForSpecificPoint = generateRange(point, Axis.VERTICAL, sequenceLength);
+      const rangeForSpecificPoint = generateRange(grid, point, Axis.VERTICAL, sequenceLength);
       ranges = ranges.concat(findSequenceInRange(rangeForSpecificPoint));
     });
 
     verticalRange.forEach(point => {
-      const rangeForSpecificPoint = generateRange(point, Axis.HORIZONTAL, sequenceLength);
+      const rangeForSpecificPoint = generateRange(grid, point, Axis.HORIZONTAL, sequenceLength);
       ranges = ranges.concat(findSequenceInRange(rangeForSpecificPoint));
     });
     
     return ranges;
 
+    /**
+     * Inner/Utility functions
+    */
     function findSequenceInRange(range: IPoint[]): IPoint[] {
       let bingoPoints: IPoint[] = [];
 

@@ -3,11 +3,12 @@ import './App.scss';
 import Grid from './components/grid/Grid';
 
 function App() {
-  const gridSize: number = 50;
+  const gridSize = 50;
+  const sequenceLength = 5;
 
   return (
     <div className="container">
-      <Grid gridSize={gridSize} />
+      <Grid gridSize={gridSize} sequenceLength={sequenceLength} />
     </div>
   );
 }
