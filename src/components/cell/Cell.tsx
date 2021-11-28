@@ -2,24 +2,24 @@ import React, { useEffect, useRef } from 'react';
 import './styles.scss';
 
 function Cell({ value, handleClick }: { value: number; handleClick: (event: any) => void }) {
-  const cellRef = useRef(null);
+  const cellRef = useRef<any>(null);
 
   useEffect(() => {
     const cellDiv = cellRef.current;
-    (cellDiv as any).classList.remove('glow-yellow');
-    (cellDiv as any).classList.remove('glow-green');
-    
+    cellDiv.classList.remove('glow-yellow');
+    cellDiv.classList.remove('glow-green');
+
     if (value > 0) {
       process.nextTick(() => {
-        (cellDiv as any).classList.add('glow-yellow');
-      });
+        cellDiv.classList.add('glow-yellow');
+      })
     }
     else if (value === 0) {
       process.nextTick(() => {
-        (cellDiv as any).classList.add('glow-green');
+        cellDiv.classList.add('glow-green');
       });
     }
-  }, [value])
+  }, [value]);
 
   return (
     <div ref={cellRef} className="cell" onClick={handleClick}>

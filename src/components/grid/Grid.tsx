@@ -14,14 +14,14 @@ interface IPoint {
 
 function Grid({ gridSize, sequenceLength }: { gridSize: number; sequenceLength: number; }) {
   const [grid, setGrid] = useState(() => {
-    return Array(gridSize).fill(0).map(()=>Array(gridSize).fill(0))
+    return Array(gridSize).fill(0).map(() => Array(gridSize).fill(0))
   });
   const [pointsToBeDeleted, setPointsToBeDeleted] = useState<IPoint[]>([]);
 
-  // Delete all points that satisfy the task and rerender
+  // Delete all points that are in sequence and re-render
   useEffect(() => {
     setGrid(grid => {
-      const newGrid = [ ...grid ];
+      const newGrid = [...grid];
       pointsToBeDeleted.forEach(point => {
         newGrid[point.x][point.y] = 0;
       });
@@ -31,28 +31,28 @@ function Grid({ gridSize, sequenceLength }: { gridSize: number; sequenceLength: 
   }, [pointsToBeDeleted]);
 
   return (
-    <div style={{display: 'grid', gridTemplateColumns: `repeat(${gridSize}, 1fr)`, gridTemplateRows: `repeat(${gridSize}, 1fr)`}}>
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${gridSize}, 1fr)`, gridTemplateRows: `repeat(${gridSize}, 1fr)` }}>
       {renderGrid()}
     </div>
   );
 
-  function renderGrid() {    
-		return grid.map((_, i) => {
+  function renderGrid(): JSX.Element[] {
+    return grid.map((_, i) => {
       return (<Fragment key={`row-${i}`}>
         {grid[i].map((_, j) => {
-          return <Cell 
-            key={`x=${i}-y=${j}`} 
+          return <Cell
+            key={`x=${i}-y=${j}`}
             value={grid[i][j]}
-            handleClick={handleClick.bind(null, { x: i, y: j})}
-            />
+            handleClick={handleClick.bind(null, { x: i, y: j })}
+          />
         })}
       </Fragment>);
     });
-	}
+  }
 
   function handleClick(point: IPoint): void {
     const { x, y } = point;
-    let newGrid = [ ...grid ];
+    let newGrid = [...grid];
     // increment row
     newGrid[x] = newGrid[x].map(val => val + 1);
     // increment column
@@ -61,60 +61,10 @@ function Grid({ gridSize, sequenceLength }: { gridSize: number; sequenceLength: 
       return row;
     });
     newGrid[x][y] = newGrid[x][y] - 1;
-    
+
 
     setPointsToBeDeleted(lookForSequence(newGrid, sequenceLength, point));
     setGrid(newGrid);
-  }
-
-  function generateRange(grid: number[][], point: IPoint, axis: Axis, rangeLenght: number): IPoint[] {
-    const range: IPoint[] = [{ x: point.x, y: point.y }];
-    switch (axis) {
-      case Axis.HORIZONTAL:
-        for (let j = 1; j < rangeLenght; j++) {
-          const pointsValue = isValidField({ row: point.x, col: point.y - j, gridSize }) ? grid[point.x][point.y - j] : undefined;
-          if (isValidField({ value: pointsValue, row: point.x, col: point.y - j, gridSize })) {
-            range.unshift({ x: point.x, y: point.y - j });
-          }
-          else {
-            break;
-          }
-        }
-
-        for (let j = 1; j < rangeLenght; j++) {
-          const pointsValue = isValidField({ row: point.x, col: point.y + j, gridSize }) ? grid[point.x][point.y + j] : undefined;
-          if (isValidField({ value: pointsValue, row: point.x, col: point.y + j, gridSize })) {
-            range.push({ x: point.x, y: point.y + j });
-          }
-          else {
-            break;
-          }
-        }
-        return range;
-      case Axis.VERTICAL:
-        for (let i = 1; i < rangeLenght; i++) {
-          const pointsValue = grid[point.x - i] && grid[point.x - i][point.y];
-          if (isValidField({ value: pointsValue, row: point.x - i, col: point.y, gridSize })) {
-            range.unshift({ x: point.x - i, y: point.y });
-          }
-          else {
-            break;
-          }
-        }
-
-        for (let i = 1; i < rangeLenght; i++) {
-          const pointsValue = grid[point.x + i] && grid[point.x + i][point.y];
-          if (isValidField({ value: pointsValue, row: point.x + i, col: point.y, gridSize })) {
-            range.push({ x: point.x + i, y: point.y });
-          }
-          else {
-            break;
-          }
-        }
-        return range;
-      default:
-        return [];
-    }
   }
 
 
@@ -124,7 +74,7 @@ function Grid({ gridSize, sequenceLength }: { gridSize: number; sequenceLength: 
    * if there is a new matching sequence, one of its points has to be on one of the axis;
    * check them both, then check perpendicular points to that axis to see if there is a match
   */
-  function lookForSequence(grid:  number[][], sequenceLength: number, origin: IPoint): IPoint[] {
+  function lookForSequence(grid: number[][], sequenceLength: number, origin: IPoint): IPoint[] {
     let ranges: IPoint[] = [];
 
     // generate arrays of points that are on each axis
@@ -148,19 +98,69 @@ function Grid({ gridSize, sequenceLength }: { gridSize: number; sequenceLength: 
       const rangeForSpecificPoint = generateRange(grid, point, Axis.HORIZONTAL, sequenceLength);
       ranges = ranges.concat(findSequenceInRange(rangeForSpecificPoint));
     });
-    
+
     return ranges;
 
     /**
      * Inner/Utility functions
     */
+    function generateRange(grid: number[][], point: IPoint, axis: Axis, rangeLenght: number): IPoint[] {
+      const range: IPoint[] = [{ x: point.x, y: point.y }];
+      switch (axis) {
+        case Axis.HORIZONTAL:
+          for (let j = 1; j < rangeLenght; j++) {
+            const pointsValue = isValidField({ row: point.x, col: point.y - j, gridSize }) ? grid[point.x][point.y - j] : undefined;
+            if (isValidField({ value: pointsValue, row: point.x, col: point.y - j, gridSize })) {
+              range.unshift({ x: point.x, y: point.y - j });
+            }
+            else {
+              break;
+            }
+          }
+
+          for (let j = 1; j < rangeLenght; j++) {
+            const pointsValue = isValidField({ row: point.x, col: point.y + j, gridSize }) ? grid[point.x][point.y + j] : undefined;
+            if (isValidField({ value: pointsValue, row: point.x, col: point.y + j, gridSize })) {
+              range.push({ x: point.x, y: point.y + j });
+            }
+            else {
+              break;
+            }
+          }
+          return range;
+        case Axis.VERTICAL:
+          for (let i = 1; i < rangeLenght; i++) {
+            const pointsValue = grid[point.x - i] && grid[point.x - i][point.y];
+            if (isValidField({ value: pointsValue, row: point.x - i, col: point.y, gridSize })) {
+              range.unshift({ x: point.x - i, y: point.y });
+            }
+            else {
+              break;
+            }
+          }
+
+          for (let i = 1; i < rangeLenght; i++) {
+            const pointsValue = grid[point.x + i] && grid[point.x + i][point.y];
+            if (isValidField({ value: pointsValue, row: point.x + i, col: point.y, gridSize })) {
+              range.push({ x: point.x + i, y: point.y });
+            }
+            else {
+              break;
+            }
+          }
+          return range;
+        default:
+          return [];
+      }
+    }
+
     function findSequenceInRange(range: IPoint[]): IPoint[] {
       let bingoPoints: IPoint[] = [];
 
       if (range.length < sequenceLength) {
         return [];
       }
-      
+
       for (let j = 0; j < range.length - sequenceLength + 1; j++) {
         const rangeToCheck = range.slice(j, sequenceLength + j);
         const rangeOfValuesToCheck = rangeToCheck.map(point => grid[point.x][point.y]);
@@ -180,15 +180,15 @@ function Grid({ gridSize, sequenceLength }: { gridSize: number; sequenceLength: 
       return bingoPoints;
     }
 
-    function isFibonacci(arr: number[] , sequenceLength: number): boolean {
-        if (sequenceLength === 1 || sequenceLength === 2)
-            return true;
- 
-        for (let i = 2; i < sequenceLength; i++) {
-            if ((arr[i - 1] + arr[i - 2]) !== arr[i])
-                return false;
-        }
+    function isFibonacci(arr: number[], sequenceLength: number): boolean {
+      if (sequenceLength === 1 || sequenceLength === 2)
         return true;
+
+      for (let i = 2; i < sequenceLength; i++) {
+        if ((arr[i - 1] + arr[i - 2]) !== arr[i])
+          return false;
+      }
+      return true;
     }
 
   }
