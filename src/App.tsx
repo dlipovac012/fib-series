@@ -1,5 +1,4 @@
 import React from 'react';
-import './App.scss';
 import Grid from './components/grid/Grid';
 
 function App() {
@@ -7,7 +6,7 @@ function App() {
   const sequenceLength = 5;
 
   return (
-    <div className="container">
+    <div>
       <Grid gridSize={gridSize} sequenceLength={sequenceLength} />
     </div>
   );
